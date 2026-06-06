@@ -1,169 +1,29 @@
+<!-- RICERCA STORICO -->
+  <div class="full-panel" style="margin-bottom:24px">
+    <div class="panel-header">
+      <div class="panel-title"><div class="dot"></div>🔍 Analisi Storico Prodotto</div>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <input id="searchInput" type="text" placeholder="Es: PlayStation 5, iPhone, MacBook..."
+        style="flex:1;min-width:200px;padding:10px 16px;border:1.5px solid #e2e6f0;border-radius:10px;font-family:'Inter',sans-serif;font-size:0.9rem;outline:none;color:#1a1d2e"
+        onkeydown="if(event.key==='Enter')searchProduct()">
+      <button onclick="searchProduct()"
+        style="background:#6c47ff;color:white;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:'Inter',sans-serif">
+        Cerca
+      </button>
+    </div>
+    <div id="searchResult"></div>
+  </div>
 
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bidoo Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-  :root {
-    --bg: #f0f2f7; --white: #ffffff; --border: #e2e6f0;
-    --accent: #6c47ff; --accent-light: #ede9ff;
-    --green: #00c896; --green-light: #e0faf3;
-    --orange: #ff6b35; --orange-light: #fff0eb;
-    --blue: #2979ff; --blue-light: #e8f0ff;
-    --text: #1a1d2e; --muted: #8890a8;
-    --shadow: 0 2px 16px rgba(108,71,255,0.07);
-    --shadow-hover: 0 8px 32px rgba(108,71,255,0.15);
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
-  header { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 40px; height: 68px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 0 var(--border); }
-  .logo { display: flex; align-items: center; gap: 12px; }
-  .logo-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--accent), #9c6fff); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-  .logo h1 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
-  .logo h1 span { color: var(--accent); }
-  .header-right { display: flex; align-items: center; gap: 16px; }
-  .live-pill { display: flex; align-items: center; gap: 7px; background: var(--green-light); color: var(--green); padding: 6px 14px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-  .live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,200,150,0.4); } 50% { opacity: 0.8; box-shadow: 0 0 0 5px rgba(0,200,150,0); } }
-  .update-badge { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 0.72rem; color: var(--muted); font-weight: 500; }
-  .refresh-btn { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
-  .refresh-btn:hover { background: #5535e0; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(108,71,255,0.3); }
-  main { padding: 32px 40px; max-width: 1400px; margin: 0 auto; }
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-  .stat-card { background: var(--white); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); transition: all 0.2s; position: relative; overflow: hidden; }
-  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
-  .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 16px; }
-  .stat-icon.purple { background: var(--accent-light); }
-  .stat-icon.green { background: var(--green-light); }
-  .stat-icon.orange { background: var(--orange-light); }
-  .stat-icon.blue { background: var(--blue-light); }
-  .stat-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
-  .stat-value { font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 6px; }
-  .stat-sub { font-size: 0.75rem; color: var(--muted); }
-  .corner-deco { position: absolute; bottom: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; opacity: 0.06; }
-  .stat-card:nth-child(1) .corner-deco { background: var(--accent); }
-  .stat-card:nth-child(2) .corner-deco { background: var(--green); }
-  .stat-card:nth-child(3) .corner-deco { background: var(--orange); }
-  .stat-card:nth-child(4) .corner-deco { background: var(--blue); }
-  .content-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
-  .panel { background: var(--white); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-  .panel-title { font-size: 0.9rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
-  .panel-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-  .category-bars { display: flex; flex-direction: column; gap: 14px; }
-  .cat-row { display: flex; flex-direction: column; gap: 5px; }
-  .cat-top { display: flex; justify-content: space-between; align-items: center; }
-  .cat-name { font-size: 0.8rem; font-weight: 500; color: var(--text); }
-  .cat-count { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
-  .cat-bar-wrap { height: 6px; background: var(--bg); border-radius: 99px; overflow: hidden; }
-  .cat-bar { height: 100%; background: linear-gradient(90deg, var(--accent), #9c6fff); border-radius: 99px; transition: width 1s ease; }
-  .full-panel { background: var(--white); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 24px; }
-  .table-wrap { overflow-x: auto; margin-top: 4px; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
-  thead th { padding: 10px 14px; text-align: left; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
-  tbody tr { border-bottom: 1px solid var(--bg); transition: background 0.15s; }
-  tbody tr:hover { background: #f7f8fc; }
-  td { padding: 12px 14px; vertical-align: middle; }
-  .title-cell { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; color: var(--text); }
-  .price-chip { display: inline-block; background: var(--accent-light); color: var(--accent); font-weight: 700; font-size: 0.82rem; padding: 4px 10px; border-radius: 8px; }
-  .savings-chip { display: inline-block; background: var(--green-light); color: var(--green); font-weight: 600; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; }
-  .cat-chip { display: inline-block; background: var(--bg); color: var(--muted); font-size: 0.7rem; font-weight: 600; padding: 3px 9px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .status-live { display: inline-flex; align-items: center; gap: 5px; background: var(--green-light); color: var(--green); font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
-  .status-live::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
-  .status-timer { display: inline-block; background: var(--orange-light); color: var(--orange); font-size: 0.7rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
-  .bids-num { font-weight: 700; color: var(--blue); }
-  a { color: var(--accent); text-decoration: none; font-weight: 600; }
-  a:hover { text-decoration: underline; }
-  .empty { text-align: center; padding: 48px 0; color: var(--muted); font-size: 0.85rem; }
-  canvas { max-height: 200px; }
-  @media (max-width: 900px) { main { padding: 20px 16px; } header { padding: 0 16px; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .content-row { grid-template-columns: 1fr; } }
-</style>
-</head>
-<body>
-<header>
-  <div class="logo">
-    <div class="logo-icon">🔨</div>
-    <h1>Bidoo<span>Tracker</span></h1>
-  </div>
-  <div class="header-right">
-    <div class="live-pill"><div class="live-dot"></div>Live</div>
-    <div class="update-badge">🕒 <span id="lastUpdate">--:--</span></div>
-    <button class="refresh-btn" onclick="loadAll()">↻ Aggiorna</button>
-  </div>
-</header>
-<main>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-icon purple">🏷️</div><div class="stat-label">Aste Totali</div><div class="stat-value" id="statTotal">—</div><div class="stat-sub">in questo momento</div><div class="corner-deco"></div></div>
-    <div class="stat-card"><div class="stat-icon green">🔴</div><div class="stat-label">Aste Live</div><div class="stat-value" id="statLive">—</div><div class="stat-sub">ora attive</div><div class="corner-deco"></div></div>
-    <div class="stat-card"><div class="stat-icon orange">💰</div><div class="stat-label">Prezzo Medio</div><div class="stat-value" id="statAvg">—</div><div class="stat-sub">euro per asta</div><div class="corner-deco"></div></div>
-    <div class="stat-card"><div class="stat-icon blue">📂</div><div class="stat-label">Categorie</div><div class="stat-value" id="statCats">—</div><div class="stat-sub">attive adesso</div><div class="corner-deco"></div></div>
-  </div>
-  <div class="content-row">
-    <div class="panel"><div class="panel-header"><div class="panel-title"><div class="dot"></div>Andamento prezzi medi</div></div><canvas id="priceChart"></canvas></div>
-    <div class="panel"><div class="panel-header"><div class="panel-title"><div class="dot"></div>Top categorie</div></div><div class="category-bars" id="catBars"><div class="empty">Caricamento...</div></div></div>
-  </div>
+  <!-- ASTE CHIUSE RECENTI -->
   <div class="full-panel">
-    <div class="panel-header"><div class="panel-title"><div class="dot"></div>Aste in corso</div></div>
+    <div class="panel-header">
+      <div class="panel-title"><div class="dot"></div>Aste chiuse recenti</div>
+    </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Prodotto</th><th>Categoria</th><th>Prezzo</th><th>Listino</th><th>Risparmio</th><th>Offerte</th><th>Stato</th><th>Link</th></tr></thead>
-        <tbody id="auctionsTable"><tr><td colspan="8" class="empty">Caricamento...</td></tr></tbody>
+        <thead><tr><th>Prodotto</th><th>Prezzo finale</th><th>Listino</th><th>Puntate</th><th>Vincitore</th><th>Link</th></tr></thead>
+        <tbody id="closedTable"><tr><td colspan="6" class="empty">Caricamento...</td></tr></tbody>
       </table>
     </div>
   </div>
-</main>
-<script>
-let priceChart = null;
-async function loadStats() {
-  try {
-    const res = await fetch('/api/stats');
-    const s = await res.json();
-    document.getElementById('statTotal').textContent = s.total ?? '0';
-    document.getElementById('statLive').textContent = s.live ?? '0';
-    document.getElementById('statAvg').textContent = s.avg_price ? '€' + s.avg_price : '—';
-    document.getElementById('statCats').textContent = s.categories?.length ?? '0';
-    document.getElementById('lastUpdate').textContent = s.last_update ?? '--:--';
-    const container = document.getElementById('catBars');
-    if (!s.categories?.length) { container.innerHTML = '<div class="empty">Nessun dato ancora</div>'; return; }
-    const max = s.categories[0].count;
-    container.innerHTML = s.categories.slice(0, 6).map(c => `<div class="cat-row"><div class="cat-top"><span class="cat-name">${c.name}</span><span class="cat-count">${c.count}</span></div><div class="cat-bar-wrap"><div class="cat-bar" style="width:${(c.count/max*100).toFixed(1)}%"></div></div></div>`).join('');
-  } catch(e) { console.error(e); }
-}
-async function loadPriceChart() {
-  try {
-    const res = await fetch('/api/price-history');
-    const data = await res.json();
-    const ctx = document.getElementById('priceChart').getContext('2d');
-    if (priceChart) priceChart.destroy();
-    priceChart = new Chart(ctx, {
-      type: 'line',
-      data: { labels: data.map(d => d.time), datasets: [{ data: data.map(d => d.avg_price), borderColor: '#6c47ff', backgroundColor: 'rgba(108,71,255,0.08)', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderColor: '#6c47ff', pointBorderWidth: 2, fill: true, tension: 0.4 }] },
-      options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => '€' + c.raw } } }, scales: { x: { grid: { color: '#f0f2f7' }, ticks: { color: '#8890a8', font: { size: 11 } } }, y: { grid: { color: '#f0f2f7' }, ticks: { color: '#8890a8', font: { size: 11 }, callback: v => '€' + v } } } }
-    });
-  } catch(e) { console.error(e); }
-}
-async function loadAuctions() {
-  try {
-    const res = await fetch('/api/auctions');
-    const auctions = await res.json();
-    const tbody = document.getElementById('auctionsTable');
-    if (!auctions.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Nessuna asta — avvia lo scraper da Termux!</td></tr>'; return; }
-    tbody.innerHTML = auctions.map(a => {
-      const savings = a.retail_price > 0 ? `<span class="savings-chip">−${(100 - a.current_price / a.retail_price * 100).toFixed(0)}%</span>` : '—';
-      const status = a.is_live ? `<span class="status-live">LIVE</span>` : `<span class="status-timer">⏱ ${a.time_left || '?'}</span>`;
-      const link = a.url ? `<a href="${a.url}" target="_blank">→ Vai</a>` : '—';
-      return `<tr><td class="title-cell">${a.title}</td><td><span class="cat-chip">${a.category}</span></td><td><span class="price-chip">€${a.current_price}</span></td><td style="color:#8890a8;font-size:0.8rem">€${a.retail_price}</td><td>${savings}</td><td><span class="bids-num">${a.bids_count}</span></td><td>${status}</td><td>${link}</td></tr>`;
-    }).join('');
-  } catch(e) { console.error(e); }
-}
-async function loadAll() { await Promise.all([loadStats(), loadPriceChart(), loadAuctions()]); }
-loadAll();
-setInterval(loadAll, 60000);
-</script>
-</body>
-</html>
